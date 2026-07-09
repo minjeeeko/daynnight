@@ -32,45 +32,52 @@ const CURRENT_USER = {
 // 탐색 대상 프로필 카탈로그
 const PROFILES = [
   {
-    id: 'u1', name: '준호', age: 33, gender: 'M',
+    id: 'u1', name: '준호', handle: '역삼동 · 33', age: 33, gender: 'M',
     region: '서초구 서초동', job: '백엔드 엔지니어', edu: '한양대학교',
     interests: ['러닝', '커피', '독서'],
     bio: '주말엔 한강에서 러닝해요. 대화가 잘 통하는 분이면 좋겠어요.',
     verified: ['신원', '직장', '학력'],
-    accent: '#ff6600', liked: false,
+    liked: false,
   },
   {
-    id: 'u2', name: '민재', age: 30, gender: 'M',
+    id: 'u2', name: '민재', handle: '연남동 · 30', age: 30, gender: 'M',
     region: '마포구 연남동', job: '마케터', edu: '고려대학교',
     interests: ['와인', '전시', '여행'],
     bio: '전시 보러 다니는 걸 좋아합니다. 함께 좋은 시간 보내요.',
     verified: ['신원', '직장', '학력'],
-    accent: '#217cf9', liked: false,
+    liked: false,
   },
   {
-    id: 'u3', name: '태윤', age: 35, gender: 'M',
+    id: 'u3', name: '태윤', handle: '이태원동 · 35', age: 35, gender: 'M',
     region: '용산구 이태원동', job: '변호사', edu: '서울대학교',
     interests: ['클래식', '요리', '골프'],
     bio: '차분한 성격입니다. 서로 존중하는 만남을 지향해요.',
     verified: ['신원', '직장', '학력'],
-    accent: '#079171', liked: true,
+    liked: true,
   },
   {
-    id: 'u4', name: '현우', age: 32, gender: 'M',
+    id: 'u4', name: '현우', handle: '삼성동 · 32', age: 32, gender: 'M',
     region: '강남구 삼성동', job: 'PM', edu: '성균관대학교',
     interests: ['여행', '사진', '맛집'],
     bio: '맛집 탐방이 취미예요. 편하게 이야기 나눠요.',
     verified: ['신원', '직장', '학력'],
-    accent: '#9b7821', liked: false,
+    liked: false,
   },
   {
-    id: 'u5', name: '지훈', age: 34, gender: 'M',
+    id: 'u5', name: '지훈', handle: '잠실동 · 34', age: 34, gender: 'M',
     region: '송파구 잠실동', job: '의사', edu: '가톨릭대학교',
     interests: ['헬스', '캠핑', '음악'],
     bio: '운동과 캠핑을 좋아합니다. 활동적인 만남을 좋아해요.',
     verified: ['신원', '직장', '학력'],
-    accent: '#e14d00', liked: false,
+    liked: false,
   },
+];
+
+// 받은 좋아요 (매칭 대기)
+const RECEIVED_LIKES = [
+  { id: 'r1', from: '비공개', age: 32, region: '강남구 대치동', job: '디자이너', when: '2시간 전' },
+  { id: 'r2', from: '비공개', age: 29, region: '서초구 반포동', job: '회계사', when: '어제' },
+  { id: 'r3', from: '비공개', age: 34, region: '성동구 성수동', job: '개발자', when: '3일 전' },
 ];
 
 // 매칭 목록 (상호 좋아요 성사)

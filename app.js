@@ -22,6 +22,7 @@ const IC = {
   cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>',
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
 };
 
 const NAV = [
@@ -32,11 +33,11 @@ const NAV = [
 ];
 
 const STATE_LABEL = {
-  schedule_input: { text: '일정 입력', badge: 'info' },
-  pending_confirm: { text: '확정 대기', badge: 'warning' },
-  confirmed: { text: '만남 확정', badge: 'success' },
-  meeting: { text: '진행 중', badge: 'primary' },
-  done: { text: '완료', badge: 'muted' },
+  schedule_input: { text: '일정 입력', badge: 'wait' },
+  pending_confirm: { text: '확정 대기', badge: 'wait' },
+  confirmed: { text: '만남 확정', badge: 'go' },
+  meeting: { text: '진행 중', badge: 'go' },
+  done: { text: '완료', badge: 'done' },
 };
 
 // ---------- 상태 ----------
@@ -136,41 +137,33 @@ function render() {
 // 탐색
 // ============================================================
 function viewDiscover() {
-  const cards = PROFILES.map(p => {
-    const grad = `linear-gradient(135deg, ${p.accent}, ${shade(p.accent)})`;
-    return `
+  const cards = PROFILES.map(p => `
     <article class="profile-card">
-      <div class="profile-card__photo" style="background:${grad}">
-        <div class="profile-card__verify">
-          ${p.verified.map(v => `<span class="verify-pill">${IC.check}${v}</span>`).join('')}
-        </div>
+      <div class="profile-card__top">
+        <div class="profile-card__photo">${p.name[0]}</div>
         <div class="profile-card__id">
           <h3>${p.name} · ${p.age}</h3>
-          <div class="sub">${IC.pin} ${p.region}</div>
+          <div class="sub">${p.job} · ${p.region}</div>
         </div>
       </div>
-      <div class="profile-card__body">
-        <div class="meta">${p.job} · ${p.edu}</div>
-        <p class="profile-card__bio">${p.bio}</p>
-        <div class="profile-card__tags">
-          ${p.interests.map(i => `<span class="chip">${i}</span>`).join('')}
-        </div>
-        <div class="profile-card__foot">
-          <button class="pass-btn" data-pass="${p.id}" aria-label="넘기기">${IC.x}</button>
-          <button class="like-btn ${p.liked ? 'is-liked' : ''}" data-like="${p.id}">
-            ${p.liked ? IC.heartFill : IC.heart}<span>${p.liked ? '좋아요 보냄' : '좋아요'}</span>
-          </button>
-        </div>
+      <div class="profile-card__verify">
+        ${p.verified.map(v => `<span class="verify-pill">${IC.check}${v} 인증</span>`).join('')}
       </div>
-    </article>`;
-  }).join('');
+      <p class="profile-card__bio">${p.bio}</p>
+      <div class="profile-card__tags">
+        ${p.interests.map(i => `<span class="tag">${i}</span>`).join('')}
+      </div>
+      <div class="profile-card__foot">
+        <button class="pass-btn" data-pass="${p.id}" aria-label="넘기기">${IC.x}</button>
+        <button class="like-btn ${p.liked ? 'is-liked' : ''}" data-like="${p.id}">
+          ${p.liked ? IC.check : IC.heart}<span>${p.liked ? '좋아요 보냄' : '좋아요'}</span>
+        </button>
+      </div>
+    </article>`).join('');
 
   return `<div class="screen__wide">
-    <div class="discover-hero">
-      <div class="moon"></div>
-      <h2>오늘 ${PROFILES.length}명의 검증된 상대</h2>
-      <p>신분증·직장·학력까지 검증된 회원만 만나요. 마음에 들면 좋아요를 보내고,<br>서로 좋아요면 채팅 없이 바로 만남을 잡아드려요.</p>
-    </div>
+    <div class="hero-search" role="search">${IC.search}<span>관심있는 상대를 검색해보세요!</span></div>
+    <p class="hero-note">신분증·직장·학력까지 검증된 회원만 만나요. 서로 좋아요면 채팅 없이 바로 만남을 잡아드려요.</p>
     <div class="profile-grid">${cards}</div>
   </div>`;
 }
@@ -202,13 +195,23 @@ function viewMatches() {
     </button>`;
   };
 
-  if (!active.length && !done.length) {
-    return `<div class="empty"><h3>아직 매칭이 없어요</h3><p>탐색에서 마음에 드는 상대에게<br>좋아요를 보내보세요.</p></div>`;
-  }
+  const likesHtml = RECEIVED_LIKES.map((r, i) => `
+    <button class="row" data-like-back="${r.id}">
+      <span class="rank">${i + 1}</span>
+      <div class="avatar" style="width:40px;height:40px;font-size:14px">${IC.user}</div>
+      <div class="row__body">
+        <div class="row__cat">받은 좋아요 · ${r.when}</div>
+        <div class="row__title">${r.from} · ${r.age}</div>
+        <div class="row__sub">${r.job} · ${r.region}</div>
+      </div>
+      <span class="badge badge--go"><span class="dot"></span>맞좋아요</span>
+    </button>`).join('');
 
   return `<div class="screen__wide">
-    ${active.length ? `<div class="section-title">진행 중인 매칭</div><div class="list">${active.map(rowHtml).join('')}</div>` : ''}
+    ${RECEIVED_LIKES.length ? `<div class="section-title">받은 좋아요 <span class="meta" style="font-weight:400">${RECEIVED_LIKES.length}</span></div><div class="list">${likesHtml}</div>` : ''}
+    ${active.length ? `<div class="section-title" style="margin-top:24px">진행 중인 매칭</div><div class="list">${active.map(rowHtml).join('')}</div>` : ''}
     ${done.length ? `<div class="section-title" style="margin-top:24px">지난 만남</div><div class="list">${done.map(rowHtml).join('')}</div>` : ''}
+    ${!active.length && !done.length && !RECEIVED_LIKES.length ? `<div class="empty"><h3>아직 매칭이 없어요</h3><p>탐색에서 마음에 드는 상대에게 좋아요를 보내보세요.</p></div>` : ''}
   </div>`;
 }
 
@@ -273,14 +276,14 @@ function viewMatchDetail(id) {
     const a = m.appointment, r = m.result, s = m.settlement;
     body = `
     <div class="card detail-card" style="text-align:center;padding:24px">
-      <div class="avatar" style="width:56px;height:56px;margin:0 auto 12px;background:var(--success)">${IC.check}</div>
+      <div class="avatar" style="width:56px;height:56px;margin:0 auto 12px;background:var(--ink);color:#fff;border-color:var(--ink)">${IC.check}</div>
       <div style="font-size:18px;font-weight:700">만남이 완료되었어요</div>
       <p class="meta" style="margin-top:6px">${r.extended ? '두 분 모두 Yes! 만남이 연장되었어요.' : '만남이 종료되었어요.'}</p>
     </div>
     <div class="section-title">지속 여부 결과</div>
     <div class="card detail-card">
-      <div class="kv"><span class="kv__k">나의 선택</span><span class="kv__v" style="color:${r.mine==='yes'?'var(--success)':'var(--muted)'}">${r.mine === 'yes' ? 'Yes · 더 만나고 싶어요' : 'No'}</span></div>
-      <div class="kv"><span class="kv__k">상대의 선택</span><span class="kv__v" style="color:${r.theirs==='yes'?'var(--success)':'var(--muted)'}">${r.theirs === 'yes' ? 'Yes · 더 만나고 싶어요' : 'No'}</span></div>
+      <div class="kv"><span class="kv__k">나의 선택</span><span class="kv__v" style="color:${r.mine==='yes'?'var(--ink)':'var(--meta)'}">${r.mine === 'yes' ? 'Yes · 더 만나고 싶어요' : 'No'}</span></div>
+      <div class="kv"><span class="kv__k">상대의 선택</span><span class="kv__v" style="color:${r.theirs==='yes'?'var(--ink)':'var(--meta)'}">${r.theirs === 'yes' ? 'Yes · 더 만나고 싶어요' : 'No'}</span></div>
     </div>
     <div class="section-title">정산 내역 (50:50)</div>
     <div class="card detail-card">
@@ -291,7 +294,7 @@ function viewMatchDetail(id) {
         <div class="split-bar__half me">나 ${won(s.myShare)}</div>
         <div class="split-bar__half you">상대 ${won(s.total - s.myShare)}</div>
       </div>
-      <div class="kv"><span class="kv__k">결제 상태</span><span class="kv__v" style="color:var(--success)">결제 완료</span></div>
+      <div class="kv"><span class="kv__k">결제 상태</span><span class="kv__v">결제 완료</span></div>
     </div>`;
   }
 
@@ -384,7 +387,7 @@ function viewMeeting() {
     const yes = mt.myDecision === 'yes' && mt.theirDecision === 'yes';
     stage = `
     <div class="card detail-card" style="text-align:center;padding:28px">
-      <div class="avatar" style="width:60px;height:60px;margin:0 auto 14px;background:${yes ? 'var(--success)' : 'var(--surface-fill)'};color:${yes ? '#fff' : 'var(--muted)'}">${yes ? IC.check : IC.clock}</div>
+      <div class="avatar" style="width:60px;height:60px;margin:0 auto 14px;background:${yes ? 'var(--ink)' : 'var(--surface)'};color:${yes ? '#fff' : 'var(--meta)'};border-color:${yes ? 'var(--ink)' : 'var(--hairline-en)'}">${yes ? IC.check : IC.clock}</div>
       <div style="font-size:19px;font-weight:700">${yes ? '두 분 모두 Yes!' : '만남이 종료되었어요'}</div>
       <p class="meta" style="margin-top:6px;line-height:1.5">${yes
         ? '연장 만남으로 전환되었어요.<br>즐거운 시간 보내세요.'
@@ -398,7 +401,7 @@ function viewMeeting() {
         <div class="split-bar__half me">나 ${won(22000)}</div>
         <div class="split-bar__half you">상대 ${won(22000)}</div>
       </div>
-      <div class="kv"><span class="kv__k">보증금 반환</span><span class="kv__v" style="color:var(--success)">+${won(30000).slice(1)}</span></div>
+      <div class="kv"><span class="kv__k">보증금 반환</span><span class="kv__v">+${won(30000).slice(1)}</span></div>
     </div>
     <button class="btn btn--primary btn--block" style="margin-top:16px" data-reset-meeting>처음으로</button>`;
   }
@@ -413,7 +416,7 @@ function viewMeeting() {
       <div class="timer-ring">
         <svg width="200" height="200">
           <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="10"/>
-          <circle id="timerArc" cx="100" cy="100" r="88" fill="none" stroke="#ff8a3d" stroke-width="10" stroke-linecap="round"
+          <circle id="timerArc" cx="100" cy="100" r="88" fill="none" stroke="#fb5957" stroke-width="10" stroke-linecap="round"
             stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - progress)}"/>
         </svg>
         <div class="timer-ring__num">
@@ -481,7 +484,7 @@ function viewMy() {
       <div class="avatar" style="width:64px;height:64px;font-size:26px">${u.name[0]}</div>
       <div style="flex:1">
         <div class="profile-head__name">${u.name} · ${u.age}
-          <span class="badge badge--success" style="margin-left:6px;vertical-align:middle"><span class="dot"></span>검증완료</span>
+          <span class="badge badge--go" style="margin-left:6px;vertical-align:middle"><span class="dot"></span>검증완료</span>
         </div>
         <div class="profile-head__meta">${u.job} · ${u.edu}</div>
         <div class="profile-head__meta">${IC2('pin')} ${u.region}</div>
@@ -506,8 +509,8 @@ function viewMy() {
                   <div class="verify-item__desc">${v.desc}</div>
                 </div>
                 ${u.verification[v.key] === 'approved'
-                  ? `<span class="badge badge--success">승인</span>`
-                  : `<span class="badge badge--warning">심사중</span>`}
+                  ? `<span class="badge badge--done"><span class="dot"></span>승인</span>`
+                  : `<span class="badge badge--wait"><span class="dot"></span>심사중</span>`}
               </div>`).join('')}
           </div>
         </div>
@@ -518,12 +521,12 @@ function viewMy() {
         <div class="card detail-card">
           ${PAYMENTS.map(p => `
             <div class="pay-row">
-              <div class="verify-item__ic" style="border-radius:var(--r-full)">${IC[payIcon(p.type)]}</div>
+              <div class="pay-row__ic">${IC[payIcon(p.type)]}</div>
               <div class="pay-row__body">
                 <div class="pay-row__label">${p.label}</div>
                 <div class="pay-row__meta">${p.date} · ${p.match} · ${p.status}</div>
               </div>
-              <div class="pay-row__amt ${p.amount >= 0 ? 'pos' : 'neg'}">${p.amount >= 0 ? '+' : ''}${won(p.amount)}</div>
+              <div class="pay-row__amt">${p.amount >= 0 ? '+' : ''}${won(p.amount)}</div>
             </div>`).join('')}
         </div>
       </div>
@@ -558,6 +561,11 @@ function bindScreen() {
   document.querySelectorAll('[data-pass]').forEach(el => el.addEventListener('click', () => {
     const p = PROFILES.find(x => x.id === el.dataset.pass);
     toast(`${p.name} 님을 넘겼어요`);
+  }));
+
+  // 받은 좋아요 → 맞좋아요(매칭)
+  document.querySelectorAll('[data-like-back]').forEach(el => el.addEventListener('click', () => {
+    toast('맞좋아요! 매칭됐어요. 일정을 잡아보세요');
   }));
 
   // 매칭 상세 열기
@@ -622,12 +630,6 @@ function bindScreen() {
 
 // ---------- 소소한 헬퍼 ----------
 function IC2(name) { return `<span style="display:inline-flex;width:15px;height:15px;vertical-align:-2px;margin-right:2px">${IC[name]}</span>`; }
-function shade(hex) {
-  const n = parseInt(hex.slice(1), 16);
-  let r = (n >> 16) - 30, g = ((n >> 8) & 255) - 20, b = (n & 255) - 20;
-  r = Math.max(0, r); g = Math.max(0, g); b = Math.max(0, b);
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
 
 // ---------- 시작 ----------
 render();
